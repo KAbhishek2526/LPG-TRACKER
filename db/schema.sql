@@ -96,6 +96,7 @@ CREATE TABLE events (
     
     location_lat DECIMAL(10, 8),
     location_lng DECIMAL(11, 8),
+    location_address TEXT,
     otp_verified BOOLEAN DEFAULT FALSE,
     
     -- Offline Attack Surface Protections
