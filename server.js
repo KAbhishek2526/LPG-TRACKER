@@ -27,6 +27,16 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', message: 'LPG Tracking System API is running' });
 });
 
+// Cloud platform Root check
+app.get('/', (req, res) => {
+    res.send('LPG Tracker Backend is Live 🚀');
+});
+
+// Testing pathway
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'API working' });
+});
+
 // Centralized Error Handling Protocol
 app.use((err, req, res, next) => {
     console.error(err.stack); // Core Trace
