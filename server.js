@@ -47,25 +47,24 @@ app.use((err, req, res, next) => {
     if (message.includes('No active assignment') || message.includes('Access denied')) {
         return res.status(403).json({ error: message, type: 'ROLE_OR_OWNERSHIP_FAILURE' });
     }
-    
+
     if (message.includes('Invalid credentials') || message.includes('Session') || message.includes('JWT') || message.includes('Authentication rejected')) {
-         return res.status(401).json({ error: message, type: 'AUTH_FAILURE' });
+        return res.status(401).json({ error: message, type: 'AUTH_FAILURE' });
     }
 
     if (message.includes('SYSTEM GUARD') || message.includes('Maximum daily limit') || message.includes('Flagged for review')) {
-         const code = message.includes('limit') ? 429 : 403;
-         return res.status(code).json({ error: message, type: 'FRAUD_BLOCK' });
+        const code = message.includes('limit') ? 429 : 403;
+        return res.status(code).json({ error: message, type: 'FRAUD_BLOCK' });
     }
-    
+
     // Duplicate Event catching handles safely via 200/201 locally in service usually, but fallback cleanly
     if (err.code === '23505') {
-         return res.status(200).json({ message: 'Duplicate event cleanly ignored natively via DB limits.' });
+        return res.status(200).json({ message: 'Duplicate event cleanly ignored natively via DB limits.' });
     }
 
     res.status(500).json({ error: message });
 });
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
