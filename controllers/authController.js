@@ -5,25 +5,6 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const rateLimit = require('express-rate-limit');
 
-exports.loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, 
-    // Compound Limit: Block IP + Attempted Phone combination
-    keyGenerator: (req) => `${req.ip}_${req.body.phone || 'unknown'}`,
-    message: { error: 'Too many login attempts, please try again after 15 minutes' }
-});
-
-// Protect delivery endpoint against spam
-exports.deliveryLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, 
-    max: 2, 
-    // Compound Limit: Block highly specific targeted API bursts based on the JWT user if decoded
-    keyGenerator: (req) => {
-        const finger = req.headers['x-device-fingerprint'] || 'unknown';
-        return `${req.ip}_${finger}`;
-    },
-    message: { error: 'Slow down. Too many delivery events registered at once.' }
-});
 
 exports.login = async (req, res, next) => {
     try {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getData } from '../utils/storage';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8080'; // Replace with actual IP if testing on physical device
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
