@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getData } from '../utils/storage';
 
-const API_BASE_URL = 'http://192.168.100.101:8080';
+const API_BASE_URL = 'https://lpg-tracker.onrender.com';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
