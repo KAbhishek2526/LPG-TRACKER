@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getData } from '../utils/storage';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = 'http://192.168.100.101:8080';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,6 +13,8 @@ export const api = axios.create({
 // Interceptor to inject security headers on every request seamlessly
 api.interceptors.request.use(
   async (config) => {
+    console.log("➡️ API Call:", config.method.toUpperCase(), `${config.baseURL}${config.url}`, config.data || "");
+
     const token = await getData('jwt_token');
     const sessionId = await getData('session_id');
     const deviceFingerprint = await getData('device_fingerprint');

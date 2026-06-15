@@ -42,10 +42,12 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ error: 'Session expired. Please log in again.' });
         }
 
-        // 4. Validate Device Fingerprint Match (NON-DESTRUCTIVE BLOCK)
+        // 4. Validate Device Fingerprint Match (NON-DESTRUCTIVE BLOCK) -> UPDATED TO BE DESTRUCTIVE (Phase 1)
         if (session.device_fingerprint !== clientFingerprint) {
-            await db.query(`INSERT INTO auth_logs (user_id, ip_address, device_fingerprint, event_type, description) VALUES ($1, $2, $3, 'DEVICE_MISMATCH', 'Target session UUID correct, but hardware fingerprint failed.')`, [jwtUserId, req.ip, clientFingerprint]);
-            return res.status(403).json({ error: 'Authentication rejected: Device binding mismatch.' });
+            await db.query(`UPDATE sessions SET is_active = false WHERE id = $1`, [session.id]);
+            await db.query(`INSERT INTO auth_logs (user_id, ip_address, device_fingerprint, event_type, description) VALUES ($1, $2, $3, 'DEVICE_MISMATCH_ANOMALY', 'Hardware fingerprint failed. Session invalidated due to possible token leakage.')`, [jwtUserId, req.ip, clientFingerprint]);
+            await db.query(`UPDATE users SET fraud_score = fraud_score + 10 WHERE id = $1`, [jwtUserId]);
+            return res.status(403).json({ error: 'Authentication rejected: Device binding mismatch. Session revoked.' });
         }
 
         // 5. Fetch User from DB (The Sole Truth)

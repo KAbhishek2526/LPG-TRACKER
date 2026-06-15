@@ -1,4 +1,4 @@
-const cylinderService = require('../services/cylinderService');
+const cylinderService = require('../../services/cylinderService');
 
 exports.assignCylinder = async (req, res, next) => {
     try {

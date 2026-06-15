@@ -5,6 +5,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ScanScreen from './src/screens/ScanScreen';
 import DeliveryScreen from './src/screens/DeliveryScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -16,6 +17,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Scan" component={ScanScreen} options={{ headerShown: true, title: 'Scan Cylinder' }} />
         <Stack.Screen name="Delivery" component={DeliveryScreen} options={{ headerShown: true, title: 'Confirm Delivery' }} />
+        <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

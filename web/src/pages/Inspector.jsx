@@ -55,9 +55,9 @@ export default function Inspector() {
   };
 
   // Fraud detection helper mapping exact node flags explicitly
-  const isFraudEvent = (actionCode) => {
-    const flags = ['FAILED_OTP', 'ANOMALY_FLAGGED', 'COMMERCIAL_MISUSE'];
-    return flags.includes(actionCode);
+  const isFraudEvent = (actionCode, anomalyFlagged) => {
+    const flags = ['FAILED_OTP', 'COMMERCIAL_MISUSE', 'LATE_OFFLINE_SYNC', 'GEOLOCATION_MISMATCH', 'DEVICE_MISMATCH_ANOMALY'];
+    return anomalyFlagged === true || flags.includes(actionCode);
   };
 
   return (
@@ -116,11 +116,12 @@ export default function Inspector() {
                 <th style={{ padding: '10px' }}>Action Variable</th>
                 <th style={{ padding: '10px' }}>Agent ID</th>
                 <th style={{ padding: '10px' }}>GPS Location</th>
+                <th style={{ padding: '10px' }}>Blockchain Status</th>
               </tr>
             </thead>
             <tbody>
               {historyLedger.map((event, index) => {
-                const fraudTriggered = isFraudEvent(event.action);
+                const fraudTriggered = isFraudEvent(event.action, event.anomaly_flagged);
                 
                 return (
                   <tr 
@@ -136,6 +137,7 @@ export default function Inspector() {
                     
                     <td style={{ padding: '10px', fontWeight: fraudTriggered ? 'bold' : 'normal', color: fraudTriggered ? '#cc0000' : 'inherit' }}>
                       {event.action} {fraudTriggered && <span style={{ marginLeft: '10px', fontSize: '11px', backgroundColor: '#cc0000', color: 'white', padding: '3px 6px', borderRadius: '12px' }}>🚨 FRAUD ALERT</span>}
+                      {event.description && <div style={{ fontSize: '12px', marginTop: '4px', fontWeight: 'normal' }}>{event.description}</div>}
                     </td>
 
                     <td style={{ padding: '10px', color: fraudTriggered ? '#cc0000' : 'inherit' }}>
@@ -154,6 +156,25 @@ export default function Inspector() {
                         `${Number(event.location_lat).toFixed(4)}, ${Number(event.location_lng).toFixed(4)}`
                       ) : (
                         'Unavailable'
+                      )}
+                    </td>
+
+                    <td style={{ padding: '10px' }}>
+                      {event.blockchain_status === 'ANCHORED' ? (
+                        <div>
+                          <span style={{ color: 'green', fontWeight: 'bold' }}>✅ ANCHORED</span>
+                          {event.blockchain_tx_hash && (
+                            <div style={{ marginTop: '4px', fontSize: '11px' }}>
+                              <a href={`https://amoy.polygonscan.com/tx/${event.blockchain_tx_hash}`} target="_blank" rel="noopener noreferrer">
+                                View on PolygonScan
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ) : event.blockchain_status === 'PENDING' ? (
+                        <span style={{ color: 'orange', fontWeight: 'bold' }}>⏳ PENDING</span>
+                      ) : (
+                        <span style={{ color: '#888' }}>-</span>
                       )}
                     </td>
                   </tr>

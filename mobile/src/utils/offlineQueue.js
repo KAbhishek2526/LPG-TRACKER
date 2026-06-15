@@ -1,40 +1,70 @@
-import { getData, storeData } from './storage';
-import { v4 as uuidv4 } from 'uuid'; // React Native UUID approach (might need 'react-native-uuid' if standard uuid crashes, but we'll use a fast random fallback just in case for MVP)
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { api } from '../services/api';
 
-const QUEUE_KEY = 'offline_delivery_queue';
+const QUEUE_KEY = '@offline_delivery_queue';
 
-// Basic rapid unique ID generator suitable for MVP offline queue caching
 const generateUniqueId = () => {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-export const getQueue = async () => {
-  const queue = await getData(QUEUE_KEY);
-  return queue ? queue : [];
-};
+export const saveToOfflineQueue = async (endpoint, payload) => {
+  try {
+    const queueData = await AsyncStorage.getItem(QUEUE_KEY);
+    const queue = queueData ? JSON.parse(queueData) : [];
+    
+    const exists = queue.find(item => item.payload.cylinder_id === payload.cylinder_id && item.endpoint === endpoint);
+    if (exists) {
+      console.warn('Action already cached in offline queue.');
+      return true;
+    }
 
-export const addToQueue = async (deliveryData) => {
-  const queue = await getQueue();
-  
-  // Prevent duplicate cylinder additions
-  const exists = queue.find(item => item.cylinder_id === deliveryData.cylinder_id);
-  if (exists) {
-    console.warn('Cylinder already cached in offline queue.');
-    return;
+    const offlineItem = {
+      id: generateUniqueId(),
+      endpoint,
+      payload: {
+        ...payload,
+        client_timestamp: new Date().toISOString(),
+        is_offline: true
+      }
+    };
+    
+    queue.push(offlineItem);
+    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    console.log("Saved to offline queue.");
+    return true;
+  } catch (error) {
+    console.error("Error saving to offline queue", error);
+    return false;
   }
-
-  const newItem = {
-    id: generateUniqueId(),
-    ...deliveryData,
-    timestamp: new Date().toISOString()
-  };
-
-  queue.push(newItem);
-  await storeData(QUEUE_KEY, queue);
 };
 
-export const removeFromQueue = async (id) => {
-  const queue = await getQueue();
-  const newQueue = queue.filter(item => item.id !== id);
-  await storeData(QUEUE_KEY, newQueue);
+export const syncOfflineData = async () => {
+  const state = await NetInfo.fetch();
+  if (!state.isConnected) return;
+
+  try {
+    const queueData = await AsyncStorage.getItem(QUEUE_KEY);
+    if (!queueData) return;
+    
+    const queue = JSON.parse(queueData);
+    if (queue.length === 0) return;
+
+    console.log(`Starting sync for ${queue.length} offline items`);
+    
+    const response = await api.post('/api/v1/sync/offline', { packets: queue });
+    
+    if (response.data && response.data.success) {
+      await AsyncStorage.removeItem(QUEUE_KEY);
+      console.log("Offline sync completed successfully.");
+    }
+  } catch (error) {
+    console.error("Failed to sync offline data", error);
+  }
 };
+
+NetInfo.addEventListener(state => {
+  if (state.isConnected) {
+    syncOfflineData();
+  }
+});
