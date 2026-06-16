@@ -21,6 +21,8 @@ export default function HomeScreen({ navigation }) {
         await fetchAssignments();
       } catch (err) {
         console.warn('Initialization error', err);
+      } finally {
+        setLoading(false);
       }
     };
     loadUserAndAssignments();

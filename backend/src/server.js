@@ -38,6 +38,23 @@ app.get('/api/test', (req, res) => {
     res.json({ message: 'API working' });
 });
 
+app.get('/api/agent/assignments', require('./middleware/auth'), async (req, res) => {
+    try {
+        const db = require('./config/db');
+        const result = await db.query(
+            `SELECT a.id, a.cylinder_id, a.status, c.phone, c.location_lat, c.location_lng 
+             FROM assignments a 
+             JOIN customers c ON a.customer_id = c.id 
+             WHERE a.agent_id = $1 AND a.status = 'ACTIVE'`, 
+            [req.user.id]
+        );
+        res.status(200).json({ assignments: result.rows });
+    } catch (err) {
+        // Explictly catch and return res.json to avoid hanging the request
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Mount modular routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cylinders', cylinderRoutes);
